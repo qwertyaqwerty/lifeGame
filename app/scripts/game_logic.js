@@ -5,9 +5,9 @@
 (function() {
   'use strict';
 
-  var width = 200;
-  var height = 200;
   var size = 10;
+  var width = Math.floor($(window).width() / size - 2);
+  var height = Math.floor($(window).height() / size - 2);
   var showMap;
   var calculationMap;
   var canvas, context;
@@ -51,10 +51,12 @@
         calculationMap[x][y] = judge(x, y);
       }
     }
-    //showMap = calculationMap;
+    var temp = 0;
     for (x = 0; x < height; x++) {
       for (y = 0; y < width; y++) {
+        temp = showMap[x][y];
         showMap[x][y] = calculationMap[x][y];
+        calculationMap[x][y] = temp;
       }
     }
   };
@@ -74,20 +76,30 @@
    * draw cells
    */
   var render = function() {
+    context.save();
     for (var i = 0; i < height; i++) {
       for (var j = 0; j < width; j++) {
-        context.save();
         context.beginPath();
         context.rect(j * size + lineWidth / 2, i * size + lineWidth / 2, size - lineWidth, size - lineWidth);
+        if (showMap[i][j] === calculationMap[i][j]) continue;
         if (showMap[i][j]) {
           context.fillStyle = lifeColor;
-        } else {
-          context.fillStyle = deadColor;
+          context.fill();
         }
-        context.fill();
-        context.restore();
       }
     }
+    for (var i = 0; i < height; i++) {
+      for (var j = 0; j < width; j++) {
+        context.beginPath();
+        context.rect(j * size + lineWidth / 2, i * size + lineWidth / 2, size - lineWidth, size - lineWidth);
+        if (showMap[i][j] === calculationMap[i][j]) continue;
+        if (!showMap[i][j]) {
+          context.fillStyle = deadColor;
+          context.fill();
+        }
+      }
+    }
+    context.restore();
   };
 
   /*
