@@ -2,35 +2,37 @@
  * Created by Yue Dayu on 2015/9/27.
  */
 
-(function() {
+(function () {
   'use strict';
 
   var size = 10;
-  var width = Math.floor($(window).width() / size - 2);
-  var height = Math.floor($(window).height() / size - 2);
+  var width = Math.floor(($(window).width() - 10) / size);
+  var height = Math.floor(($(window).height() - 10) / size);
   var showMap;
   var calculationMap;
   var canvas, context;
   var lineColor = '#bbb',
-      lineWidth = 2;
+    lineWidth = 2;
   var lifeColor = '#000',
-      deadColor = '#fff';
+    deadColor = '#fff';
   var burn = 3,
-      stay = 2;
-  var time = 10;
-  var liftRate = 0.5;
+    stay = 2;
+  var time = 100;
+  var lifeRate = 0.15;
+  var isStart = false;
+  var gameLoop;
 
   /*
    * judge
    */
-  var judge = function(x, y) {
+  var judge = function (x, y) {
     var sum = 0;
     for (var dx = -1; dx <= 1; dx++) {
       for (var dy = -1; dy <= 1; dy++) {
         if (dx === 0 && dy === 0) {
           continue;
         }
-        sum += Number(showMap[(x + dx + height) % height][(y + dy + width) % width]);
+        sum += showMap[(x + dx + height) % height][(y + dy + width) % width];
       }
     }
     if (sum === burn) {
@@ -45,13 +47,13 @@
   /*
    * next step
    */
-  var nextStep = function() {
+  var nextStep = function () {
     for (var x = 0; x < height; x++) {
       for (var y = 0; y < width; y++) {
         calculationMap[x][y] = judge(x, y);
       }
     }
-    var temp = 0;
+    var temp = false;
     for (x = 0; x < height; x++) {
       for (y = 0; y < width; y++) {
         temp = showMap[x][y];
@@ -64,37 +66,39 @@
   /*
    * random map
    */
-  var randomMap = function() {
+  var randomMap = function () {
     for (var i = 0; i < height; i++) {
       for (var j = 0; j < width; j++) {
-        showMap[i][j] = Math.random() < liftRate;
+        showMap[i][j] = Boolean(Math.random() < lifeRate);
       }
     }
+    render();
+    start();
   };
 
   /*
    * draw cells
    */
-  var render = function() {
+  var render = function () {
     context.save();
+    context.fillStyle = lifeColor;
     for (var i = 0; i < height; i++) {
       for (var j = 0; j < width; j++) {
         context.beginPath();
         context.rect(j * size + lineWidth / 2, i * size + lineWidth / 2, size - lineWidth, size - lineWidth);
         if (showMap[i][j] === calculationMap[i][j]) continue;
         if (showMap[i][j]) {
-          context.fillStyle = lifeColor;
           context.fill();
         }
       }
     }
+    context.fillStyle = deadColor;
     for (var i = 0; i < height; i++) {
       for (var j = 0; j < width; j++) {
         context.beginPath();
         context.rect(j * size + lineWidth / 2, i * size + lineWidth / 2, size - lineWidth, size - lineWidth);
         if (showMap[i][j] === calculationMap[i][j]) continue;
         if (!showMap[i][j]) {
-          context.fillStyle = deadColor;
           context.fill();
         }
       }
@@ -105,7 +109,7 @@
   /*
    * draw the lines.
    */
-  var drawGrid = function() {
+  var drawGrid = function () {
     context.beginPath();
     context.lineWidth = lineWidth;
     context.strokeStyle = lineColor;
@@ -121,9 +125,30 @@
   };
 
   /*
+   * start!
+   */
+  var start = function () {
+    isStart = true;
+    gameLoop = setInterval(function () {
+      nextStep();
+      render();
+    }, time);
+  };
+
+  /*
+   * Stop!
+   */
+  var stop = function () {
+    if (isStart) {
+      clearInterval(gameLoop);
+    }
+    isStart = false;
+  };
+
+  /*
    * param: (id, width, height, size), (id, width) or (id)
    */
-  var init = function() {
+  var init = function () {
     if (arguments.length === 2) {
       width = height = arguments[1];
     } else if (arguments.length >= 3) {
@@ -145,11 +170,35 @@
     context = canvas.getContext('2d');
     drawGrid();
     randomMap();
-    render();
-    setInterval(function() {
-      nextStep();
-      render();
-    }, time);
+    $(window).keypress(function(event) {
+      if (event.which == 13) {
+        if (isStart) {
+          stop();
+        } else {
+          start();
+        }
+      } else if (event.which == 32) {
+        if (!isStart) {
+          for (var x = 0; x < height; x++) {
+            for (var y = 0; y < width; y++) {
+              showMap[x][y] = false;
+              calculationMap[x][y] = true;
+            }
+          }
+          render();
+        }
+      }
+    });
+    $(canvas).mousedown(function(event) {
+      console.log(Math.floor((event.offsetX) / 10) + " " + Math.floor((event.offsetY) / 10));
+      if (!isStart) {
+        var y = Math.floor((event.offsetX) / 10);
+        var x = Math.floor((event.offsetY) / 10);
+        calculationMap[x][y] = showMap[x][y];
+        showMap[x][y] = !showMap[x][y];
+        render();
+      }
+    });
   };
 
   window.lifeGame = init;
