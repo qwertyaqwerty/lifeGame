@@ -1,1 +1,4 @@
-console.log('\'Allo \'Allo!');
+(function() {
+  'use strict';
+  window.lifeGame('show');
+})();
