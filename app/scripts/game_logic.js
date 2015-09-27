@@ -186,6 +186,11 @@
             }
           }
           render();
+          for (var x = 0; x < height; x++) {
+            for (var y = 0; y < width; y++) {
+              calculationMap[x][y] = false;
+            }
+          }
         }
       }
     });
