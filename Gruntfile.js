@@ -319,6 +319,17 @@ module.exports = function (grunt) {
         'imagemin',
         'svgmin'
       ]
+    },
+
+    strip_code: {
+      options: {
+        start_comment: "test-code",
+        end_comment: "end-test-code",
+      },
+      dist: {
+        // a list of files you want to strip code from
+        src: '.tmp/concat/scripts/{,*/}*.js',
+      }
     }
   });
 
@@ -369,8 +380,9 @@ module.exports = function (grunt) {
     'autoprefixer',
     'concat',
     'cssmin',
-    'uglify',
     'copy:dist',
+    'strip_code',
+    'uglify',
     'rev',
     'usemin',
     'htmlmin'

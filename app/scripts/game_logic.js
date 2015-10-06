@@ -26,6 +26,11 @@
   var isStart = false;
   var gameLoop;
 
+  var isTest = false;
+  /* test-code */
+  isTest = true;
+  /* end-test-code */
+
   /*
    * judge
    */
@@ -179,17 +184,49 @@
   };
 
   /*
-   * Restart
+   * alert when not unit test
    */
-  var restart = function() {
-    stop();
+  var alertWhenNotTest = function(msg) {
+    if (!isTest) {
+      alert(msg);
+    } else {
+      console.log(msg);      
+    }
+  };
+  /*
+   * form check functions
+   */
+  var isPositiveInteger = function(str) {
+    return /^[1-9]\d*$/.test(str);
+  };
 
-    width = Math.floor(($("#show").width() + 10) / size);
-    height = Math.floor(($(window).height() - 45) / size);
+  var isNumber = function(str) {
+    return !isNaN(Number(str));
+  };
 
-    canvas.width = width * size;
-    canvas.height = height * size;
+  var formCheck = function(gridSize, frameRate, lifeRate, ruleSet) {
+    if (!isPositiveInteger(gridSize) || Number(gridSize) < 4 || Number(gridSize) > 50) {
+      alertWhenNotTest("Grid size must be an integer between 4 and 50");
+      return false;
+    };
+    if (!isNumber(frameRate) || Number(frameRate) < 1e-3 || Number(frameRate) > 200) {
+      alertWhenNotTest("Frame rate must be an positive number less than 200");
+      return false;
+    };
+    if (!isNumber(lifeRate) || Number(lifeRate) < 1e-3 || Number(lifeRate) >= 1) {
+      alertWhenNotTest("Life rate must be between 0 and 1");
+      return false;
+    };
+    if (ruleSet !== "0" && ruleSet !== "1") {
+      return false;
+    };
+    return true;
+  };
 
+  /*
+   * init arrays
+   */
+  var initArrays = function() {
     showMap = new Array(height);
     calculationMap = new Array(height);
     blockMap = new Array(height);
@@ -203,6 +240,20 @@
         blockMap[i][j] = false;
       }
     }
+  }
+  /*
+   * Restart
+   */
+  var restart = function() {
+    stop();
+
+    width = Math.floor(($(window).width()) / size);
+    height = Math.floor(($(window).height() - 45) / size);
+
+    canvas.width = width * size;
+    canvas.height = height * size;
+
+    initArrays();
 
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -242,11 +293,17 @@
     });
 
     btnApply.click(function(event) {
-      size = Number($("#grid-size").val());
-      time = Math.floor(1000 / Number($("#frame-rate").val()));
-      lifeRate = Number($("#init-pos").val());
-      ruleSet = Number($("input[name='rule-set']:checked").val());
-      restart();
+      var gridSize = $("#grid-size").val();
+      var frameRate = $("#frame-rate").val();
+      var initPos = $("#init-pos").val();
+      var rule = $("input[name='rule-set']:checked").val();
+      if (formCheck(gridSize, frameRate, initPos, rule)) {
+        size = Number(gridSize);
+        time = Math.floor(1000 / Number(frameRate));
+        lifeRate = Number(initPos);
+        ruleSet = Number(rule);
+        restart();
+      };
     });
 
     btnRandom.click(function(event) {
@@ -280,8 +337,6 @@
     });
     document.oncontextmenu = function() {return false;};
     $(canvas).mousedown(function(event) {
-      console.log(Math.floor((event.offsetX) / size) + " " + Math.floor((event.offsetY) / size));
-      console.log(isStart);
       if (!isStart) {
         var y = Math.floor((event.offsetX) / size);
         var x = Math.floor((event.offsetY) / size);
@@ -309,4 +364,64 @@
   };
 
   window.lifeGame = init;
+
+  /* test-code */
+  window.__testOnly__ = {
+    judge_: judge,
+    nextStep_: nextStep,
+    isPositiveInteger_: isPositiveInteger,
+    isNumber_: isNumber,
+    formCheck_: formCheck,
+    initArrays_: initArrays,
+    getHeight: function() {
+      return height;
+    },
+    setHeight: function(val) {
+      height = val;
+    },
+    getWidth: function() {
+      return width;
+    },
+    setWidth: function(val) {
+      width = val;
+    },
+    getSize: function() {
+      return size;
+    },
+    setSize: function(val) {
+      size = val;
+    },
+    getLifeRate: function() {
+      return lifeRate;
+    },
+    setLifeRate: function(val) {
+      lifeRate = val;
+    },
+    getRuleSet: function() {
+      return ruleSet;
+    },
+    setRuleSet: function(val) {
+      ruleSet = val;
+    },
+    getShowMapElem: function(x, y) {
+      return showMap[x][y];
+    },
+    setShowMapElem: function(x, y, val) {
+      showMap[x][y] = val;
+    },
+    getCalculationMapElem: function(x, y) {
+      return calculationMap[x][y];
+    },
+    setCalculationMapElem: function(x, y) {
+      calculationMap[x][y] = val;
+    },
+    getBlockMapElem: function(x, y) {
+      return blockMap[x][y];
+    },
+    setBlockMapElem: function(x, y, val) {
+      blockMap[x][y] = val;
+    }
+  };
+  /* end-test-code */
+
 })();
